@@ -44,9 +44,9 @@ hdbuserstore -i set SYSTEM <hostname>:3NN13@SYSTEMDB SYSTEM <Password>
 7. Set the SAP HANA tenant db in no-restart mode.
 This is important, to avoid an automatic start of the tenant db, after the snapshot is restored. If the tenant is online, it is no longer possible to recover log files
 Logon to SAP HANA system DB and execute the following command:
-    ````
+````
 ALTER DATABASE <Tenant-SID> NO RESTART;
-    ````
+````
 
 
 ### Recommendations
