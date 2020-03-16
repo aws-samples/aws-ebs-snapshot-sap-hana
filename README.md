@@ -1,6 +1,6 @@
 # SAP HANA AWS Snapshots
 How to use AWS EBS Snapshots for SAP HANA database to create an automated
-recovery procedure
+recovery procedure. More information see [SAP on AWS blog](https://aws.amazon.com/blogs/awsforsap/how-to-use-snapshots-for-sap-hana-database-to-create-an-automated-recovery-procedure/).
 
 # Backup
 
@@ -65,7 +65,7 @@ ALTER DATABASE <Tenant-SID> NO RESTART;
 
 ## Prerequisites
 
-1. Verify mount options
+1. Verify mount options  
 Make sure that the instance is started even if the /hana/data and /hana/log volume is not mounted. Set the option 'nofail' to the mount options in /etc/fstab
 
 2. Create AMI of HANA server
