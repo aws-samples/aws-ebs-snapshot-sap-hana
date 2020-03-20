@@ -30,9 +30,7 @@ HDBUSERSTORE=SYSTEM
 instanceid=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
 az=`curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone`
 region="`echo \"$az\" | sed 's/[a-z]$//'`"
-#passwd=$(aws ssm get-parameters --names $hanapasswd --with-decryption --region $region |awk 'NR ==7' | awk '{print $2}' |sed 's/\"//g' |sed 's/\,//g')
 sidadm=$(ps -C sapstart -o user |awk 'NR ==2' | awk '{print $1}')
-#instancenr=$(sudo -u hdbadm -i HDB info | grep hdbindexserver |awk 'NR ==1' | awk '{print $10}' | cut -c2-3)
 
 #Log output to AWS console log
 logfile="/var/log/user-data.log"
