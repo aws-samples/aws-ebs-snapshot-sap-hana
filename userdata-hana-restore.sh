@@ -123,7 +123,8 @@ do
   NEWVOLDATA[$i]=$(aws ec2 create-volume --region $REGION --availability-zone $AZ --snapshot-id ${SNAPIDDATA[$i]} --volume-type gp2 --output=text --query VolumeId)
   echo -e "Volume-id of created volume: ${NEWVOLDATA[$i]}"
   #device info
-  DATADEVICEINFO+=($(aws ec2 describe-snapshots --snapshot-id ${SNAPIDDATA[$i]} | jq -r ".Snapshots[] | .Tags" | grep -B1 device_name |awk 'NR ==1' | awk '{print $2}' |sed 's/\"//g' |sed 's/\,//g'))
+  DATADEVICEINFO[$i]=$(aws ec2 describe-snapshots --snapshot-id ${SNAPIDDATA[$i]} --output text | grep device_name | awk '{print $3}')
+  echo "Device info for ${NEWVOLDATA[$i]} : ${DATADEVICEINFO[$i]}"
 done
 # Log volume
 for ((i=0; i<${#SNAPIDLOG[@]}; i++));
@@ -131,7 +132,8 @@ do
   NEWVOLLOG[$i]=$(aws ec2 create-volume --region $REGION --availability-zone $AZ --snapshot-id ${SNAPIDLOG[$i]} --volume-type gp2 --output=text --query VolumeId)
   echo -e "Volume-id of created volume: ${NEWVOLLOG[$i]}"
   #device info
-  LOGDEVICEINFO+=($(aws ec2 describe-snapshots --snapshot-id ${SNAPIDLOG[$i]} | jq -r ".Snapshots[] | .Tags" | grep -B1 device_name |awk 'NR ==1' | awk '{print $2}' |sed 's/\"//g' |sed 's/\,//g'))
+  LOGDEVICEINFO[$i]=$(aws ec2 describe-snapshots --snapshot-id ${SNAPIDLOG[$i]} --output text | grep device_name | awk '{print $3}')
+  echo "Device info for ${NEWVOLLOG[$i]} : ${LOGDEVICEINFO[$i]}"
 done
 
 
