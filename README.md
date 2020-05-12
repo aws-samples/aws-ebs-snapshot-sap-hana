@@ -9,7 +9,7 @@ recovery procedure. More information see [SAP on AWS blog](https://aws.amazon.co
 - SLES 12 SP3 (tested with a single DB tenant)
 - HANA data volumes are using lvm
 - jq package installed on HANA host
-- AWS CLI installed on hana host (min. version: aws-cli/1.16.176)
+- AWS CLI installed on hana host (version: aws-cli/1.18.57)
 - Parameter in AWS SSM parameter store for hana/data and hana/log volumes
 - Password for SYSTEM set in hdbuserstore
 - HANA tenant db 'restart=no'

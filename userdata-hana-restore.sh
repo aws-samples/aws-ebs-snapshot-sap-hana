@@ -74,14 +74,14 @@ echo -e "$(date +"%Y-%m-%d"+"%T") - Starting restore procedure"
 ##Get the volume-id of /hana/data volumes relevant for snapshot from parameter list
 OIFS=$IFS;
 IFS=",";
-DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL --output text | awk '{print $6}')
+DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL --output text | awk '{print $7}')
 DATAVOLID=($DATAVOL);
 for ((i=0; i<${#DATAVOLID[@]}; ++i)); do     echo "DataVolume-ID-$i: ${DATAVOLID[$i]}"; done
 IFS=$OIFS;
 #Log Volumes
 OIFS=$IFS;
 IFS=",";
-LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL --output text | awk '{print $6}')
+LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL --output text | awk '{print $7}')
 LOGVOLID=($LOGVOL);
 for ((i=0; i<${#LOGVOLID[@]}; ++i)); do     echo "LogVolume-ID-$i: ${LOGVOLID[$i]}"; done
 IFS=$OIFS;
