@@ -74,14 +74,14 @@ echo -e "$(date +"%Y-%m-%d"+"%T") - Starting restore procedure"
 ##Get the volume-id of /hana/data volumes relevant for snapshot from parameter list
 OIFS=$IFS;
 IFS=",";
-DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL --output text | awk '{print $7}')
+DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL | jq -r ".Parameters[] | .Value")
 DATAVOLID=($DATAVOL);
 for ((i=0; i<${#DATAVOLID[@]}; ++i)); do     echo "DataVolume-ID-$i: ${DATAVOLID[$i]}"; done
 IFS=$OIFS;
 #Log Volumes
 OIFS=$IFS;
 IFS=",";
-LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL --output text | awk '{print $7}')
+LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL | jq -r ".Parameters[] | .Value")
 LOGVOLID=($LOGVOL);
 for ((i=0; i<${#LOGVOLID[@]}; ++i)); do     echo "LogVolume-ID-$i: ${LOGVOLID[$i]}"; done
 IFS=$OIFS;
@@ -179,20 +179,10 @@ df -h
 
 ## Update SSM Parameter with new volume-ids
 echo "Update SSM parameters with new volume-ids"
-for ((i=0; i<${#NEWVOLDATA[@]}; i++));
-do
-  voldatassmupdate=$voldatassmupdate${NEWVOLDATA[$i]},
-done
-voldatassmupdate=${voldatassmupdate%,}
-#Log volumes
-for ((i=0; i<${#NEWVOLLOG[@]}; i++));
-do
-  vollogssmupdate=$vollogssmupdate${NEWVOLLOG[$i]},
-done
-vollogssmupdate=${vollogssmupdate%,}
-
-aws ssm put-parameter --name $SSMPARAMDATAVOL --type StringList --value ${voldatassmupdate} --overwrite
-aws ssm put-parameter --name $SSMPARAMLOGVOL --type StringList --value ${vollogssmupdate} --overwrite
+voldatassmupdate=$(IFS=, ; echo "${NEWVOLDATA[*]}")
+aws ssm put-parameter --name $SSMPARAMDATAVOL --type StringList --value "$voldatassmupdate" --overwrite
+vollogssmupdate=$(IFS=, ; echo "${NEWVOLLOG[*]}")
+aws ssm put-parameter --name $SSMPARAMLOGVOL --type StringList --value "$vollogssmupdate" --overwrite
 
 ## Start HANA system DB
 echo "Start HANA System DB"
