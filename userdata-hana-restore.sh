@@ -62,10 +62,10 @@ sudo systemctl start amazon-ssm-agent
 
 # update route 53
 INSTANCEIP=$( curl http://169.254.169.254/latest/meta-data/local-ipv4 )
-HOSTED_ZONE_ID=$( aws route53 list-hosted-zones-by-name | grep -B 1 -e "local" | sed 's/.*hostedzone\/\([A-Za-z0-9]*\)\".*/\1/' | head -n 1 )
+HOSTED_ZONE_ID=$( aws route53 list-hosted-zones-by-name --region $REGION | grep -B 1 -e "local" | sed 's/.*hostedzone\/\([A-Za-z0-9]*\)\".*/\1/' | head -n 1 )
 INPUT_JSON=$( cat /hana/update-route53.json | sed "s/127\.0\.0\.1/$INSTANCEIP/" )
 INPUT_JSON="{ \"ChangeBatch\": $INPUT_JSON }"
-aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --cli-input-json "$INPUT_JSON"
+aws route53 change-resource-record-sets --hosted-zone-id "$HOSTED_ZONE_ID" --cli-input-json "$INPUT_JSON" --region $REGION
 
 
 ## Restore
@@ -74,14 +74,14 @@ echo -e "$(date +"%Y-%m-%d"+"%T") - Starting restore procedure"
 ##Get the volume-id of /hana/data volumes relevant for snapshot from parameter list
 OIFS=$IFS;
 IFS=",";
-DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL | jq -r ".Parameters[] | .Value")
+DATAVOL=$(aws ssm get-parameters --names $SSMPARAMDATAVOL --region $REGION | jq -r ".Parameters[] | .Value")
 DATAVOLID=($DATAVOL);
 for ((i=0; i<${#DATAVOLID[@]}; ++i)); do     echo "DataVolume-ID-$i: ${DATAVOLID[$i]}"; done
 IFS=$OIFS;
 #Log Volumes
 OIFS=$IFS;
 IFS=",";
-LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL | jq -r ".Parameters[] | .Value")
+LOGVOL=$(aws ssm get-parameters --names $SSMPARAMLOGVOL --region $REGION | jq -r ".Parameters[] | .Value")
 LOGVOLID=($LOGVOL);
 for ((i=0; i<${#LOGVOLID[@]}; ++i)); do     echo "LogVolume-ID-$i: ${LOGVOLID[$i]}"; done
 IFS=$OIFS;
@@ -90,13 +90,13 @@ IFS=$OIFS;
 ##Get the date of the latest complete snapshot for each volume
 for ((i=0; i<${#DATAVOLID[@]}; ++i));
 do
-  LATESTSNAPDATEDATA[$i]=$(aws ec2 describe-snapshots --filters Name=volume-id,Values=${DATAVOLID[$i]} Name=status,Values=completed Name=tag:Createdby,Values=AWS-HANA-Snapshot_of_${HOSTNAME} | jq -r ".Snapshots[] | .StartTime" | sort -r | awk 'NR ==1')
+  LATESTSNAPDATEDATA[$i]=$(aws ec2 describe-snapshots --region $REGION --filters Name=volume-id,Values=${DATAVOLID[$i]} Name=status,Values=completed Name=tag:Createdby,Values=AWS-HANA-Snapshot_of_${HOSTNAME} | jq -r ".Snapshots[] | .StartTime" | sort -r | awk 'NR ==1')
   echo -e "Latest date of snapshot for ${DATAVOLID[$i]} : ${LATESTSNAPDATEDATA[$i]}"
 done
 # Log volume
 for ((i=0; i<${#LOGVOLID[@]}; ++i));
 do
-  LATESTSNAPDATELOG[$i]=$(aws ec2 describe-snapshots --filters Name=volume-id,Values=${LOGVOLID[$i]} Name=status,Values=completed Name=tag:Createdby,Values=AWS-HANA-Snapshot_of_${HOSTNAME} | jq -r ".Snapshots[] | .StartTime" | sort -r | awk 'NR ==1')
+  LATESTSNAPDATELOG[$i]=$(aws ec2 describe-snapshots --region $REGION --filters Name=volume-id,Values=${LOGVOLID[$i]} Name=status,Values=completed Name=tag:Createdby,Values=AWS-HANA-Snapshot_of_${HOSTNAME} | jq -r ".Snapshots[] | .StartTime" | sort -r | awk 'NR ==1')
   echo -e "Latest date of snapshot for ${LOGVOLID[$i]} : ${LATESTSNAPDATELOG[$i]}"
 done
 
@@ -104,13 +104,13 @@ done
 ##Get the snapshot-id from the latest snapshot
 for ((i=0; i<${#LATESTSNAPDATEDATA[@]}; ++i));
 do
-  SNAPIDDATA[$i]=$(aws ec2 describe-snapshots --filters Name=start-time,Values=${LATESTSNAPDATEDATA[$i]} Name=volume-id,Values=${DATAVOLID[$i]} | jq -r ".Snapshots[] | .SnapshotId")
+  SNAPIDDATA[$i]=$(aws ec2 describe-snapshots --region $REGION --filters Name=start-time,Values=${LATESTSNAPDATEDATA[$i]} Name=volume-id,Values=${DATAVOLID[$i]} | jq -r ".Snapshots[] | .SnapshotId")
   echo -e "Snapshot ID: ${SNAPIDDATA[$i]}"
 done
 # Log volume
 for ((i=0; i<${#LATESTSNAPDATELOG[@]}; ++i));
 do
-  SNAPIDLOG[$i]=$(aws ec2 describe-snapshots --filters Name=start-time,Values=${LATESTSNAPDATELOG[$i]} Name=volume-id,Values=${LOGVOLID[$i]} | jq -r ".Snapshots[] | .SnapshotId")
+  SNAPIDLOG[$i]=$(aws ec2 describe-snapshots --region $REGION --filters Name=start-time,Values=${LATESTSNAPDATELOG[$i]} Name=volume-id,Values=${LOGVOLID[$i]} | jq -r ".Snapshots[] | .SnapshotId")
   echo -e "Snapshot ID: ${SNAPIDLOG[$i]}"
 done
 
@@ -123,7 +123,7 @@ do
   NEWVOLDATA[$i]=$(aws ec2 create-volume --region $REGION --availability-zone $AZ --snapshot-id ${SNAPIDDATA[$i]} --volume-type gp2 --output=text --query VolumeId)
   echo -e "Volume-id of created volume: ${NEWVOLDATA[$i]}"
   #device info
-  DATADEVICEINFO[$i]=$(aws ec2 describe-snapshots --snapshot-id ${SNAPIDDATA[$i]} --output text | grep device_name | awk '{print $3}')
+  DATADEVICEINFO[$i]=$(aws ec2 describe-snapshots --region $REGION --snapshot-id ${SNAPIDDATA[$i]} --output text | grep device_name | awk '{print $3}')
   echo "Device info for ${NEWVOLDATA[$i]} : ${DATADEVICEINFO[$i]}"
 done
 # Log volume
@@ -132,7 +132,7 @@ do
   NEWVOLLOG[$i]=$(aws ec2 create-volume --region $REGION --availability-zone $AZ --snapshot-id ${SNAPIDLOG[$i]} --volume-type gp2 --output=text --query VolumeId)
   echo -e "Volume-id of created volume: ${NEWVOLLOG[$i]}"
   #device info
-  LOGDEVICEINFO[$i]=$(aws ec2 describe-snapshots --snapshot-id ${SNAPIDLOG[$i]} --output text | grep device_name | awk '{print $3}')
+  LOGDEVICEINFO[$i]=$(aws ec2 describe-snapshots --region $REGION --snapshot-id ${SNAPIDLOG[$i]} --output text | grep device_name | awk '{print $3}')
   echo "Device info for ${NEWVOLLOG[$i]} : ${LOGDEVICEINFO[$i]}"
 done
 
@@ -164,12 +164,12 @@ done
 #Data volumes
 for ((i=0; i<${#NEWVOLDATA[@]}; i++));
 do
-  aws ec2 attach-volume --volume-id ${NEWVOLDATA[$i]} --instance-id $INSTANCEID --device ${DATADEVICEINFO[$i]}
+  aws ec2 attach-volume --region $REGION --volume-id ${NEWVOLDATA[$i]} --instance-id $INSTANCEID --device ${DATADEVICEINFO[$i]}
 done
 #Log volumes
 for ((i=0; i<${#NEWVOLLOG[@]}; i++));
 do
-  aws ec2 attach-volume --volume-id ${NEWVOLLOG[$i]} --instance-id $INSTANCEID --device ${LOGDEVICEINFO[$i]}
+  aws ec2 attach-volume --region $REGION --volume-id ${NEWVOLLOG[$i]} --instance-id $INSTANCEID --device ${LOGDEVICEINFO[$i]}
 done
 
 ##Mount volumes
@@ -180,9 +180,9 @@ df -h
 ## Update SSM Parameter with new volume-ids
 echo "Update SSM parameters with new volume-ids"
 voldatassmupdate=$(IFS=, ; echo "${NEWVOLDATA[*]}")
-aws ssm put-parameter --name $SSMPARAMDATAVOL --type StringList --value "$voldatassmupdate" --overwrite
+aws ssm put-parameter --name $SSMPARAMDATAVOL --type StringList --value "$voldatassmupdate" --overwrite --region $REGION
 vollogssmupdate=$(IFS=, ; echo "${NEWVOLLOG[*]}")
-aws ssm put-parameter --name $SSMPARAMLOGVOL --type StringList --value "$vollogssmupdate" --overwrite
+aws ssm put-parameter --name $SSMPARAMLOGVOL --type StringList --value "$vollogssmupdate" --overwrite --region $REGION
 
 ## Start HANA system DB
 echo "Start HANA System DB"
