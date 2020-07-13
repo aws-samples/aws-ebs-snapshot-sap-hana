@@ -129,52 +129,39 @@ log "INFO: Start AWS snapshot backup"
 log "INFO: Check log file $logfile for more information"
 
 # 1) Check prerequisites
-prerequisite_check
-if [ $? -ne 0 ]
-then
-   log "ERROR: Database or Tenant DB is not online, no connection possible"
-   log "Exit..."
+if prerequisite_check; then :
+else log "ERROR: Database or Tenant DB is not online, no connection possible"
    exit 1
 fi
 
 # 2) Execute Snap on HANA DB for Backup Katalog
-hana_create_snap
-if [ $? -ne 0 ]
-then
-   log "ERROR: Entry into HANA backup catalog was not successful"
+if hana_create_snap; then :
+else log "ERROR: Entry into HANA backup catalog was not successful"
    exit 1
 fi
 
 # 3) Execute EBS Snapshot
-snapshot_instance
-if [ $? -ne 0 ]
-then
-   log "ERROR: EBS Snapshot was not successful"
+if snapshot_instance; then :
+else log "ERROR: EBS Snapshot was not successful"
    delete_invalid_snap
    exit 1
 fi
 
 # 4) Confirm Snap for Backaup Katalog
-hana_confirm_snap
-if [ $? -ne 0 ]
-then
-   log "ERROR: Snapshot could not be confirmend into HANA backup catalog"
+if hana_confirm_snap; then :
+else log "ERROR: Snapshot could not be confirmend into HANA backup catalog"
    exit 1
 fi
 
 # 5) Tag snapshot with device name
-tag_mountinfo
-if [ $? -ne 0 ]
-then
-   log "ERROR: Could not create tags for EBS snapshots"
+if tag_mountinfo; then :
+else log "ERROR: Could not create tags for EBS snapshots"
    exit 1
 fi
 
 # 6) Validate snap
-delete_invalid_snap
-if [ $? -ne 0 ]
-then
-   log "ERROR: EBS snapshots could not be deleted - please remove invalid snapshots manually"
+if delete_invalid_snap; then :
+else log "ERROR: EBS snapshots could not be deleted - please remove invalid snapshots manually"
    exit 1
 fi
 
