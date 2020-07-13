@@ -75,8 +75,8 @@ Make sure that the instance is started even if the /hana/data and /hana/log volu
 4. Create an Autoscaling Group with mix/max capacity = 1
 
 # Additional documentation
-[IAM example policies - Working with snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html#iam-example-manage-snapshots)
-[Restricting access to Systems Manager parameters using IAM policies](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-access.html)
+[IAM example policies - Working with snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html#iam-example-manage-snapshots)  
+[Restricting access to Systems Manager parameters using IAM policies](https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-access.html)  
 [Attach or Detach Volumes to an EC2 Instance](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_examples_ec2_volumes-instance.html)
 
 # License
