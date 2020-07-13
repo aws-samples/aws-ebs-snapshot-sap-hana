@@ -72,8 +72,8 @@ snapshot_instance() {
 tag_mountinfo() {
     OIFS=$IFS;
     IFS=",";
-    volume_list_data=$(aws ssm get-parameters --region $region --names $SSMPARAMDATAVOL --output text | awk '{print $6}')
-    volume_list_log=$(aws ssm get-parameters --region $region --names $SSMPARAMLOGVOL --output text | awk '{print $6}')
+    volume_list_data=$(aws ssm get-parameters --region $region --names $SSMPARAMDATAVOL | jq -r ".Parameters[] | .Value")
+    volume_list_log=$(aws ssm get-parameters --region $region --names $SSMPARAMLOGVOL | jq -r ".Parameters[] | .Value")
     volume_list="$volume_list_data$volume_list_log"
     declare -a volume_id_sorted
     declare -a device_name_sorted
