@@ -2,6 +2,8 @@
 How to use AWS EBS Snapshots for SAP HANA database to create an automated
 recovery procedure. More information see [SAP on AWS blog](https://aws.amazon.com/blogs/awsforsap/how-to-use-snapshots-for-sap-hana-database-to-create-an-automated-recovery-procedure/).
 
+**Update 11/2023:** Customers can now use [Amazon Data Lifecycle Manager](https://aws.amazon.com/about-aws/whats-new/2023/11/automate-application-ebs-snapshots-sap-hana-databases/) to automate the creation and retention of application-consistent EBS Snapshots for SAP HANA databases.
+
 # Backup
 
 ## Prerequisites
